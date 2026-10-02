@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Log Viewer</title>
+<style>
+:root{
+  --bg:#f7f6f2; --panel:#ffffff; --side:#efede6; --fg:#1f1e1b; --muted:#6b6860;
+  --line:#dcd9cf; --accent:#b4552d; --human:#e9e4d6; --code:#f1efe8; --sel:#e2ddcf;
+  --tool:#eef2f6; --think:#f4f0e6;
+  --k-red:#c8442f; --k-red-bg:#f9e1dc; --k-amber:#b7791f; --k-amber-bg:#fbedcf; --k-blue:#2f6db5; --k-blue-bg:#dde9f7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1b19; --panel:#24231f; --side:#1f1e1b; --fg:#e8e6df; --muted:#9a968b;
+    --line:#3a3833; --accent:#e08a5f; --human:#2f2d28; --code:#171614; --sel:#34322c;
+    --tool:#1f252c; --think:#2a2722;
+    --k-red:#ef7a64; --k-red-bg:#4a2620; --k-amber:#e5b04f; --k-amber-bg:#46381c; --k-blue:#79a9e8; --k-blue-bg:#1f3350;
+  }
+}
+:root[data-theme="dark"]{
+  --k-red:#ef7a64; --k-red-bg:#4a2620; --k-amber:#e5b04f; --k-amber-bg:#46381c; --k-blue:#79a9e8; --k-blue-bg:#1f3350;
+  --bg:#1c1b19; --panel:#24231f; --side:#1f1e1b; --fg:#e8e6df; --muted:#9a968b;
+  --line:#3a3833; --accent:#e08a5f; --human:#2f2d28; --code:#171614; --sel:#34322c;
+  --tool:#1f252c; --think:#2a2722;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans CJK JP","Noto Sans JP",sans-serif}
+button,input,select{font:inherit;color:inherit}
+#app{display:grid;grid-template-columns:320px 1fr;height:100%}
+#side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#side header{padding:12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+#side h1{font-size:15px;margin:0;display:flex;justify-content:space-between;align-items:center}
+#q{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.row{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+#list{overflow:auto;flex:1;padding:6px}
+.item{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px}
+.item:hover{background:var(--sel)}
+.item.on{background:var(--sel);box-shadow:inset 3px 0 0 var(--accent)}
+.item .t{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .d{font-size:12px;color:var(--muted)}
+#main{display:flex;flex-direction:column;min-width:0;min-height:0}
+#bar{padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+#bar .title{font-weight:600;flex:1 1 240px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+label.chk{font-size:13px;color:var(--muted);display:flex;gap:4px;align-items:center;cursor:pointer}
+#conv{overflow:auto;flex:1;padding:20px 16px 80px}
+.wrap{max-width:860px;margin:0 auto}
+.msg{margin:18px 0;display:grid;grid-template-columns:1.6em minmax(0,1fr);column-gap:10px}
+.gut{border-radius:6px;border-left:2px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0}
+.gut.on{border-left:0;background:var(--g-bg)}
+.gut i{font-style:normal;font-size:12px;font-weight:700;line-height:1;width:1.35em;height:1.35em;display:flex;align-items:center;justify-content:center;border-radius:4px;color:#fff}
+.gut i.red{background:var(--k-red)} .gut i.amber{background:var(--k-amber)} .gut i.blue{background:var(--k-blue)}
+.legend{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.legend i{font-style:normal;font-size:11px;font-weight:700;color:#fff;border-radius:4px;padding:0 4px;margin-right:3px}
+.legend i.red{background:var(--k-red)} .legend i.amber{background:var(--k-amber)} .legend i.blue{background:var(--k-blue)}
+.who{font-size:12px;color:var(--muted);margin-bottom:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.who b{color:var(--fg)}
+.human .body{background:var(--human);border-radius:12px;padding:10px 14px}
+.body p{margin:.5em 0}
+.body pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow:auto;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre}
+.body code{background:var(--code);border-radius:4px;padding:0 4px;font:.9em ui-monospace,Menlo,Consolas,monospace}
+.body pre code{background:none;padding:0}
+.body h1,.body h2,.body h3,.body h4{line-height:1.35;margin:1em 0 .4em}
+.body h1{font-size:1.3em}.body h2{font-size:1.2em}.body h3{font-size:1.08em}.body h4{font-size:1em}
+.body ul,.body ol{padding-left:1.4em;margin:.4em 0}
+.body a{color:var(--accent)}
+.redacted{border:1px dashed var(--line);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--muted);background:transparent}
+.redacted .note{white-space:pre-wrap}
+.annot{margin:8px 0 0;padding:6px 12px;border-left:3px solid var(--accent);background:var(--think);border-radius:0 8px 8px 0;font-size:13px}
+.annot .lab{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:2px}
+.annot .lab span{color:var(--muted);font-weight:400;margin-left:6px}
+.annot p{margin:.3em 0}
+.msg.cutrow{margin:10px 0}
+.msg.cutrow .cut{margin:0;height:100%;display:flex;align-items:center;justify-content:center}
+.cut{font-size:12px;color:var(--muted);text-align:center;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:4px 0;margin:10px 0}
+.item.gone .t{font-style:italic;color:var(--muted)}
+details.log{font-size:12px;color:var(--muted);margin:6px 0 0}
+details.log summary{cursor:pointer}
+details.log table{border-collapse:collapse;margin-top:4px;width:100%}
+details.log td,details.log th{border-bottom:1px solid var(--line);padding:2px 6px;text-align:left;vertical-align:top;word-break:break-all}
+.redacted .meta{font:11px/1.6 ui-monospace,Menlo,Consolas,monospace;opacity:.85;word-break:break-all}
+.human .body:has(.redacted){background:transparent;padding:0}
+.mt{display:inline-flex;gap:4px;margin-left:auto}
+.mt button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:0 7px;font-size:11px;cursor:pointer;color:var(--muted)}
+.mt button:hover{border-color:var(--accent);color:var(--fg)}
+.mt button.danger:hover{border-color:#c0392b;color:#c0392b}
+.body blockquote{margin:.5em 0;padding-left:12px;border-left:3px solid var(--line);color:var(--muted)}
+.body table{border-collapse:collapse;margin:.6em 0;display:block;overflow:auto}
+.body td,.body th{border:1px solid var(--line);padding:4px 8px}
+details.blk{border:1px solid var(--line);border-radius:8px;margin:8px 0;background:var(--tool);font-size:13px}
+details.blk.think{background:var(--think)}
+details.blk summary{cursor:pointer;padding:5px 10px;color:var(--muted)}
+details.blk pre{margin:0;border:0;border-top:1px solid var(--line);border-radius:0 0 8px 8px;max-height:420px;white-space:pre-wrap;word-break:break-word}
+.fork{display:inline-flex;gap:4px;align-items:center;font-size:12px}
+.fork button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:0 7px;cursor:pointer}
+.fork button:disabled{opacity:.35;cursor:default}
+.att{font-size:12px;color:var(--muted)}
+#drop{display:flex;align-items:center;justify-content:center;height:100%;padding:24px}
+#drop .box{border:2px dashed var(--line);border-radius:16px;padding:40px 28px;text-align:center;max-width:520px;background:var(--panel)}
+#drop.over .box{border-color:var(--accent)}
+.muted{color:var(--muted)}
+mark{background:#f5d76e;color:#000;border-radius:2px}
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:40% 60%}
+  #side{border-right:0;border-bottom:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <header>
+      <h1>Claude Log Viewer <button class="btn" id="theme" title="テーマ切替">◐</button></h1>
+      <input type="file" id="file" accept=".json,application/json">
+      <input id="q" type="search" placeholder="タイトル検索（/本文 で全文検索）">
+      <div class="row"><span id="count"></span></div>
+    </header>
+    <div id="list"></div>
+  </aside>
+  <main id="main">
+    <div id="drop"><div class="box">
+      <p><b>conversations.json</b> をここにドロップ<br>または左上で選択してください</p>
+      <p class="muted" style="font-size:13px">ファイルはブラウザ内だけで読み込まれ、外部には送信されません。</p>
+    </div></div>
+  </main>
+</div>
+
+<script>
+"use strict";
+const ROOT = "00000000-0000-4000-8000-000000000000";
+let DATA = [], cur = null, choice = {}; // choice[parentUuid] = index of selected child
+const opt = { think:false, tools:false, sys:false, att:true, annot:true };
+const REDACT_NOTE = "この入力・出力は審査の段階で不適切だと判定されたので除去しております";
+const ACT_LABEL = {redact:"内容を伏せる", redact_note:"伏せた理由の更新", cut_above:"上を削除", cut_below:"下を削除", delete_conversation:"会話の削除", annotate:"注釈の追加・更新", annotate_remove:"注釈の削除"};
+function annotView(m){
+  if (!m.annotation || !opt.annot) return "";
+  return `<div class="annot"><div class="lab">注釈${m.annotation_updated_at ? `<span>${esc(fmt(m.annotation_updated_at))}</span>` : ""}</div>${md(m.annotation)}</div>`;
+}
+const annotText = m => (m.annotation && opt.annot) ? `\n[注釈] ${m.annotation}\n` : "";
+const cutRow = t => `<div class="msg cutrow"><div class="gut on" style="--g-bg:var(--k-blue-bg)" title="後からの編集: 削除した範囲"><i class="blue">切</i></div><div class="mc"><div class="cut">${t}</div></div></div>`;
+const cutAbove = m => m.cut_above_count ? cutRow(`↑ この上にあった ${m.cut_above_count} 件の入出力は削除されています`) : "";
+const cutBelow = m => m.cut_below_count ? cutRow(`↓ この下にあった ${m.cut_below_count} 件の入出力は削除されています`) : "";
+function logHtml(c){
+  const L = c.edit_log || []; if (!L.length) return "";
+  return `<details class="log"><summary>編集記録 ${L.length} 件</summary><table>
+    <tr><th>日時</th><th>操作</th><th>対象</th><th>削除件数</th></tr>
+    ${L.map(e => `<tr><td>${esc(fmt(e.at))}</td><td>${esc(ACT_LABEL[e.action]||e.action)}</td><td>${esc(e.message_uuid||"")}</td><td>${e.removed_count ?? ""}</td></tr>`).join("")}
+  </table></details>`;
+}
+function logText(c){
+  const L = c.edit_log || []; if (!L.length) return "";
+  return "\n----- 編集記録 -----\n" + L.map(e => `${fmt(e.at)}  ${ACT_LABEL[e.action]||e.action}${e.message_uuid?"  対象: "+e.message_uuid:""}${e.removed_count!=null?"  削除: "+e.removed_count+" 件":""}`).join("\n") + "\n";
+}
+// marks for after-the-fact edits: shown in the 1-character gutter left of each message
+function marks(m){
+  const k = [];
+  if (m.redacted) k.push({c:"red", g:"伏", t:"内容を伏せた発言"});
+  if (m.annotation) k.push({c:"amber", g:"注", t:"注釈あり"});
+  return k;
+}
+function gutter(m){
+  const k = marks(m);
+  if (!k.length) return `<div class="gut" title="元の対話（編集なし）"></div>`;
+  return `<div class="gut on" style="--g-bg:var(--k-${k[0].c}-bg)" title="後からの編集: ${k.map(x=>x.t).join("・")}">${k.map(x=>`<i class="${x.c}">${x.g}</i>`).join("")}</div>`;
+}
+const LEGEND = `<div class="legend">左端の印は後からの編集：<span><i class="red">伏</i>内容を伏せた</span><span><i class="amber">注</i>注釈</span><span><i class="blue">切</i>削除した範囲</span><span>印なし＝元の対話</span></div>`;
+function redactedHtml(m){
+  if (typeof redactEditor === "function") return redactEditor(m);
+  return `<div class="redacted"><div class="note">${esc(m.redaction_note || REDACT_NOTE)}</div>
+    <div class="meta">uuid: ${esc(m.uuid)} · sender: ${esc(m.sender)} · created: ${esc(m.created_at)}${m.redacted_at?" · redacted: "+esc(m.redacted_at):""}</div></div>`;
+}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = t => t ? new Date(t).toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+
+/* ---------- theme ---------- */
+$("#theme").onclick = () => {
+  const r = document.documentElement, dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const now = r.dataset.theme || (dark ? "dark" : "light");
+  r.dataset.theme = now === "dark" ? "light" : "dark";
+};
+
+/* ---------- loading ---------- */
+function loadText(txt, name){
+  let d;
+  try { d = JSON.parse(txt); } catch(e){ alert("JSON の読み込みに失敗しました: " + e.message); return; }
+  if (!Array.isArray(d)) d = d.conversations || [d];
+  DATA = d.map(prep).sort((a,b) => (b.updated_at||"").localeCompare(a.updated_at||""));
+  document.title = "Claude Log Viewer — " + (name||"");
+  renderList();
+  if (DATA.length) openConv(DATA[0].uuid);
+}
+$("#file").onchange = e => { const f = e.target.files[0]; if (f) f.text().then(t => loadText(t, f.name)); };
+["dragover","dragenter"].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); $("#drop")?.classList.add("over"); }));
+document.addEventListener("dragleave", () => $("#drop")?.classList.remove("over"));
+document.addEventListener("drop", e => {
+  e.preventDefault(); $("#drop")?.classList.remove("over");
+  const f = e.dataTransfer.files[0]; if (f) f.text().then(t => loadText(t, f.name));
+});
+
+/* ---------- model ---------- */
+function msgText(m){
+  const parts = (m.content||[]).filter(p => p.type === "text").map(p => p.text||"");
+  return parts.length ? parts.join("\n\n") : (m.text||"");
+}
+function prep(c){
+  const ms = (c.chat_messages||[]).slice().sort((a,b)=>(a.created_at||"").localeCompare(b.created_at||""));
+  const kids = {};
+  const ids = new Set(ms.map(m=>m.uuid));
+  for (const m of ms){
+    let p = m.parent_message_uuid;
+    if (!p || !ids.has(p)) p = ROOT;
+    (kids[p] ||= []).push(m);
+  }
+  const first = ms.find(m=>m.sender==="human");
+  const title = c.deleted ? "(削除された会話)" : c.name || (first ? msgText(first).slice(0,40).replace(/\s+/g," ") : "") || "(無題)";
+  const full = (c.name||"") + "\n" + ms.map(msgText).join("\n");
+  return {...c, _ms:ms, _kids:kids, _title:title, _untitled:!c.name || !!c.deleted, _full:full.toLowerCase()};
+}
+// path through the tree: at each fork, follow choice (default = newest child)
+function path(c){
+  const out = []; let p = ROOT, guard = 0;
+  while (c._kids[p] && guard++ < 100000){
+    const ks = c._kids[p];
+    let i = choice[p]; if (i == null || i >= ks.length) i = ks.length - 1;
+    out.push({m:ks[i], idx:i, n:ks.length, parent:p});
+    p = ks[i].uuid;
+  }
+  return out;
+}
+
+/* ---------- list ---------- */
+$("#q").oninput = renderList;
+function renderList(){
+  const raw = $("#q").value.trim();
+  const fulltext = raw.startsWith("/");
+  const q = (fulltext ? raw.slice(1) : raw).trim().toLowerCase();
+  const hit = DATA.filter(c => !q || (fulltext ? c._full.includes(q) : c._title.toLowerCase().includes(q)));
+  $("#count").textContent = DATA.length ? `${hit.length} / ${DATA.length} 件` : "";
+  $("#list").innerHTML = hit.map(c => `
+    <div class="item ${cur&&cur.uuid===c.uuid?"on":""} ${c.deleted?"gone":""}" data-id="${c.uuid}">
+      <div class="t">${c._untitled?'<span class="muted">'+esc(c._title)+'</span>':esc(c._title)}</div>
+      <div class="d">${fmt(c.updated_at||c.created_at)} · ${c.deleted ? "削除済み" : c._ms.length + " msgs"}</div>
+    </div>`).join("");
+  $("#list").querySelectorAll(".item").forEach(el => el.onclick = () => openConv(el.dataset.id));
+}
+
+/* ---------- markdown (small, safe: escape first) ---------- */
+function md(src){
+  const blocks = [];
+  src = String(src||"").replace(/\r\n/g,"\n").replace(/```([^\n`]*)\n([\s\S]*?)(?:```|$)/g, (_,lang,code) => {
+    blocks.push(`<pre><code>${esc(code.replace(/\n$/,""))}</code></pre>`); return `\u0000${blocks.length-1}\u0000`;
+  });
+  const inline = s => esc(s)
+    .replace(/`([^`]+)`/g,"<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>")
+    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g,"$1<i>$2</i>")
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const lines = src.split("\n"); let html = "", i = 0;
+  while (i < lines.length){
+    const l = lines[i];
+    if (/^\u0000\d+\u0000$/.test(l.trim())){ html += blocks[+l.trim().slice(1,-1)]; i++; continue; }
+    let h = l.match(/^(#{1,6})\s+(.*)/);
+    if (h){ const n=Math.min(h[1].length+1,4); html += `<h${n}>${inline(h[2])}</h${n}>`; i++; continue; }
+    if (/^\s*([-*+]|\d+[.)])\s+/.test(l)){
+      const ordered = /^\s*\d/.test(l); let items = [];
+      while (i < lines.length && /^\s*([-*+]|\d+[.)])\s+/.test(lines[i])){ items.push(lines[i].replace(/^\s*([-*+]|\d+[.)])\s+/,"")); i++; }
+      html += `<${ordered?"ol":"ul"}>${items.map(x=>"<li>"+inline(x)+"</li>").join("")}</${ordered?"ol":"ul"}>`; continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(l)){
+      let rows = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){ rows.push(lines[i]); i++; }
+      rows = rows.filter(r => !/^\s*\|[\s:|-]+\|\s*$/.test(r));
+      html += "<table>"+rows.map((r,k)=>"<tr>"+r.trim().slice(1,-1).split("|").map(c=>`<${k?"td":"th"}>${inline(c.trim())}</${k?"td":"th"}>`).join("")+"</tr>").join("")+"</table>"; continue;
+    }
+    if (/^>\s?/.test(l)){
+      let q=[]; while (i<lines.length && /^>\s?/.test(lines[i])){ q.push(lines[i].replace(/^>\s?/,"")); i++; }
+      html += "<blockquote>"+inline(q.join("\n")).replace(/\n/g,"<br>")+"</blockquote>"; continue;
+    }
+    if (!l.trim()){ i++; continue; }
+    let p=[];
+    while (i<lines.length && lines[i].trim() && !/^(#{1,6}\s|\s*([-*+]|\d+[.)])\s|>|\s*\|)/.test(lines[i]) && !/^\u0000\d+\u0000$/.test(lines[i].trim())){ p.push(lines[i]); i++; }
+    if (!p.length){ p.push(l); i++; }
+    html += "<p>"+p.map(inline).join("<br>")+"</p>";
+  }
+  return html;
+}
+
+/* ---------- conversation view ---------- */
+function toStr(x){
+  if (x == null) return "";
+  if (typeof x === "string") return x;
+  if (Array.isArray(x)) return x.map(y => y && y.type==="text" ? y.text : toStr(y)).join("\n");
+  return JSON.stringify(x, null, 2);
+}
+function renderBlocks(m){
+  if (m.redacted) return redactedHtml(m);
+  let h = "";
+  for (const p of (m.content||[])){
+    if (p.type === "text") h += md(p.text);
+    else if (p.type === "thinking" && opt.think){
+      const s = p.thinking || (p.summaries||[]).map(x=>x.summary).join("\n");
+      if (s) h += `<details class="blk think"><summary>思考</summary><pre>${esc(s)}</pre></details>`;
+    }
+    else if (p.type === "tool_use" && opt.tools)
+      h += `<details class="blk"><summary>ツール呼び出し: ${esc(p.name)}</summary><pre>${esc(toStr(p.input))}</pre></details>`;
+    else if (p.type === "tool_result" && opt.tools)
+      h += `<details class="blk"><summary>ツール結果: ${esc(p.name)}${p.is_error?" (error)":""}</summary><pre>${esc(toStr(p.content))}</pre></details>`;
+    else if (p.type === "injected_prompt_block" && opt.sys)
+      h += `<details class="blk"><summary>システム挿入: ${esc(p.injection_source)}</summary><pre>${esc(p.prompt)}</pre></details>`;
+    else if (p.type === "document")
+      h += `<div class="att">📄 ${esc(p.title)}</div>`;
+  }
+  if (!(m.content||[]).some(p=>p.type==="text") && m.text) h = md(m.text) + h;
+  if (opt.att){
+    for (const a of (m.attachments||[]))
+      h += `<details class="blk"><summary>添付: ${esc(a.file_name||"(名称なし)")} ${a.file_type?"("+esc(a.file_type)+")":""}</summary><pre>${esc(a.extracted_content)}</pre></details>`;
+    for (const f of (m.files||[])) h += `<div class="att">🖼 ${esc(f.file_name)}（画像本体はエクスポートに含まれません）</div>`;
+  }
+  return h;
+}
+function openConv(id){
+  const c = DATA.find(x=>x.uuid===id); if (!c) return;
+  if (!cur || cur.uuid !== id) choice = {};
+  cur = c;
+  document.querySelectorAll(".item").forEach(el=>el.classList.toggle("on", el.dataset.id===id));
+  const p = path(c);
+  $("#main").innerHTML = `
+    <div id="bar">
+      <div class="title" title="${esc(c._title)}">${esc(c._title)}</div>
+      <label class="chk"><input type="checkbox" data-o="think" ${opt.think?"checked":""}>思考</label>
+      <label class="chk"><input type="checkbox" data-o="tools" ${opt.tools?"checked":""}>ツール</label>
+      <label class="chk"><input type="checkbox" data-o="att" ${opt.att?"checked":""}>添付</label>
+      <label class="chk"><input type="checkbox" data-o="sys" ${opt.sys?"checked":""}>システム</label>
+      <label class="chk"><input type="checkbox" data-o="annot" ${opt.annot?"checked":""}>注釈</label>
+      <button class="btn" id="dlTxt">.txt 保存</button>
+      <button class="btn" id="dlMd">.md 保存</button>
+      <button class="btn" id="cp">コピー</button>
+    </div>
+    <div id="conv"><div class="wrap">
+      <div class="muted" style="font-size:12px">作成 ${fmt(c.created_at)} · 更新 ${fmt(c.updated_at)} · 表示中 ${p.length} / 全 ${c._ms.length} メッセージ</div>
+      ${c.deleted ? `<div class="cut">この会話は削除されました（元のメッセージ数 ${c.deleted_message_count ?? "?"} 件）。記録のみ残しています。</div>` : ""}
+      ${c._ms.some(x => marks(x).length || x.cut_above_count || x.cut_below_count) ? LEGEND : ""}
+      ${logHtml(c)}
+      ${p.map(({m,idx,n,parent}) => `
+        ${cutAbove(m)}<div class="msg ${m.sender==="human"?"human":"assistant"}">${gutter(m)}<div class="mc">
+          <div class="who"><b>${m.sender==="human"?"あなた":"Claude"}</b><span>${fmt(m.created_at)}</span>
+            ${n>1?`<span class="fork"><button data-p="${parent}" data-d="-1" ${idx===0?"disabled":""}>‹</button>分岐 ${idx+1}/${n}<button data-p="${parent}" data-d="1" ${idx===n-1?"disabled":""}>›</button></span>`:""}
+            ${typeof msgTools === "function" ? msgTools(m) : ""}
+          </div>
+          <div class="body">${renderBlocks(m)}</div>${typeof annotEditor === "function" ? annotEditor(m) : annotView(m)}
+        </div></div>${cutBelow(m)}`).join("")}
+    </div></div>`;
+  $("#bar").querySelectorAll("input[data-o]").forEach(el => el.onchange = () => { opt[el.dataset.o] = el.checked; keepScroll(()=>openConv(id)); });
+  $("#conv").querySelectorAll(".fork button").forEach(b => b.onclick = () => {
+    const par = b.dataset.p, n = c._kids[par].length;
+    let i = choice[par]; if (i == null) i = n - 1;
+    choice[par] = Math.max(0, Math.min(n-1, i + (+b.dataset.d)));
+    keepScroll(()=>openConv(id));
+  });
+  if (typeof bindMsgTools === "function") bindMsgTools(c);
+  $("#dlTxt").onclick = () => download(toText(c,false), c._title + ".txt");
+  $("#dlMd").onclick  = () => download(toText(c,true),  c._title + ".md");
+  $("#cp").onclick = () => navigator.clipboard.writeText(toText(c,false)).then(()=>{ $("#cp").textContent="コピー済"; setTimeout(()=>$("#cp")&&($("#cp").textContent="コピー"),1500); });
+}
+function keepScroll(fn){ const y = $("#conv")?.scrollTop||0; fn(); if ($("#conv")) $("#conv").scrollTop = y; }
+
+/* ---------- export (current branch, respecting toggles) ---------- */
+function toText(c, asMd){
+  const sep = asMd ? s => `\n## ${s}\n\n` : s => `\n===== ${s} =====\n`;
+  let out = asMd ? `# ${c._title}\n\n` : `${c._title}\n`;
+  out += `作成: ${fmt(c.created_at)}  更新: ${fmt(c.updated_at)}\n`;
+  for (const {m} of path(c)){
+    if (m.cut_above_count) out += `\n[切] ↑ この上にあった ${m.cut_above_count} 件の入出力は削除されています\n`;
+    const mk = marks(m).map(x => "[" + x.g + "]").join("");
+    out += sep(`${mk ? mk + " " : ""}${m.sender==="human"?"あなた":"Claude"}  ${fmt(m.created_at)}`);
+    if (m.redacted){ out += `（${m.redaction_note || REDACT_NOTE}）\n`; }
+    const cb = m.cut_below_count ? `\n[切] ↓ この下にあった ${m.cut_below_count} 件の入出力は削除されています\n` : "";
+    if (m.redacted){ out += annotText(m) + cb; continue; }
+    for (const p of (m.content||[])){
+      if (p.type === "text") out += p.text + "\n";
+      else if (p.type==="thinking" && opt.think){ const s = p.thinking || (p.summaries||[]).map(x=>x.summary).join("\n"); if (s) out += `\n[思考]\n${s}\n`; }
+      else if (p.type==="tool_use" && opt.tools) out += `\n[ツール呼び出し: ${p.name}]\n${toStr(p.input)}\n`;
+      else if (p.type==="tool_result" && opt.tools) out += `\n[ツール結果: ${p.name}]\n${toStr(p.content)}\n`;
+      else if (p.type==="injected_prompt_block" && opt.sys) out += `\n[システム挿入: ${p.injection_source}]\n${p.prompt}\n`;
+      else if (p.type==="document") out += `[文書: ${p.title}]\n`;
+    }
+    if (!(m.content||[]).some(p=>p.type==="text") && m.text) out += m.text + "\n";
+    if (opt.att){
+      for (const a of (m.attachments||[])) out += `\n[添付: ${a.file_name||"(名称なし)"}]\n${a.extracted_content||""}\n`;
+      for (const f of (m.files||[])) out += `[画像: ${f.file_name}]\n`;
+    }
+    out += annotText(m) + cb;
+  }
+  if (c.deleted) out += `\n（この会話は削除されました。元のメッセージ数 ${c.deleted_message_count ?? "?"} 件）\n`;
+  return out + logText(c);
+}
+function download(text, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], {type:"text/plain;charset=utf-8"}));
+  a.download = name.replace(/[\\/:*?"<>|]/g,"_");
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 60000);
+}
+</script>
+</body>
+</html>

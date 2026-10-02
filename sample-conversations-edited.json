@@ -1,0 +1,274 @@
+[
+ {
+  "uuid": "511b60d6-f632-48f1-a9ad-3b2da795d80e",
+  "name": "二次方程式の解の公式の由来",
+  "summary": "",
+  "created_at": "2026-09-01T10:00:00Z",
+  "updated_at": "2026-09-01T10:14:00Z",
+  "account": {
+   "uuid": "sample"
+  },
+  "chat_messages": [
+   {
+    "uuid": "5d2b9b8e-2f64-49bf-b412-627c1f3c765c",
+    "text": "二次方程式の解の公式は、どうやって見つかったのですか？",
+    "content": [
+     {
+      "type": "text",
+      "text": "二次方程式の解の公式は、どうやって見つかったのですか？"
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "00000000-0000-4000-8000-000000000000",
+    "annotation": "※ この質問から、平方完成の話題に入った。",
+    "annotation_updated_at": "2026-10-02T13:03:45.765Z"
+   },
+   {
+    "uuid": "ed525400-16b5-4ef1-b111-ec53fbb236fa",
+    "text": "もともとは公式ではなく、**平方完成**という手順として見つかりました。\n\n- バビロニアの粘土板には、面積の問題を図形の操作で解く例が残っています。\n- 9世紀のアル=フワーリズミーが、この手順を体系的に整理しました。\n\n記号を使った現在の形 `x = (-b ± √(b²-4ac)) / 2a` になったのは、ずっと後のことです。",
+    "content": [
+     {
+      "type": "text",
+      "text": "もともとは公式ではなく、**平方完成**という手順として見つかりました。\n\n- バビロニアの粘土板には、面積の問題を図形の操作で解く例が残っています。\n- 9世紀のアル=フワーリズミーが、この手順を体系的に整理しました。\n\n記号を使った現在の形 `x = (-b ± √(b²-4ac)) / 2a` になったのは、ずっと後のことです。"
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-09-01T10:02:00Z",
+    "updated_at": "2026-09-01T10:02:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "5d2b9b8e-2f64-49bf-b412-627c1f3c765c"
+   },
+   {
+    "uuid": "a186eaad-d58d-4999-a0dd-beea084ae75a",
+    "text": "",
+    "content": [],
+    "sender": "human",
+    "created_at": "2026-09-01T10:04:00Z",
+    "updated_at": "2026-09-01T10:04:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "ed525400-16b5-4ef1-b111-ec53fbb236fa",
+    "redacted": true,
+    "redaction_note": "私的な相談のため、著者の判断で非公開としました。",
+    "redacted_at": "2026-10-02T13:03:45.857Z"
+   },
+   {
+    "uuid": "94eff0e8-6aaa-4927-af08-fc1bf85f04dc",
+    "text": "",
+    "content": [],
+    "sender": "assistant",
+    "created_at": "2026-09-01T10:06:00Z",
+    "updated_at": "2026-09-01T10:06:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "a186eaad-d58d-4999-a0dd-beea084ae75a",
+    "redacted": true,
+    "redaction_note": "↑への返答のため、非公開としました。",
+    "redacted_at": "2026-10-02T13:03:46.023Z"
+   },
+   {
+    "uuid": "06ce7c0b-e655-4697-88c7-2c593b2b34ab",
+    "text": "平方完成を、図で説明するとどうなりますか？",
+    "content": [
+     {
+      "type": "text",
+      "text": "平方完成を、図で説明するとどうなりますか？"
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-09-01T10:08:00Z",
+    "updated_at": "2026-09-01T10:08:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "94eff0e8-6aaa-4927-af08-fc1bf85f04dc",
+    "annotation": "図にすると分かりやすい、という例。",
+    "annotation_updated_at": "2026-10-02T13:03:46.577Z"
+   },
+   {
+    "uuid": "4f7b0b25-58fd-4b73-8697-ebbb8608a340",
+    "text": "x² + bx を、一辺 x の正方形と、幅 b/2 の長方形2枚に分けて並べます。欠けた角に一辺 b/2 の正方形を足すと、全体が一辺 x + b/2 の正方形になります。これが「平方を完成する」という名前の由来です。",
+    "content": [
+     {
+      "type": "text",
+      "text": "x² + bx を、一辺 x の正方形と、幅 b/2 の長方形2枚に分けて並べます。欠けた角に一辺 b/2 の正方形を足すと、全体が一辺 x + b/2 の正方形になります。これが「平方を完成する」という名前の由来です。"
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-09-01T10:10:00Z",
+    "updated_at": "2026-09-01T10:10:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "06ce7c0b-e655-4697-88c7-2c593b2b34ab",
+    "cut_below_count": 2
+   }
+  ],
+  "edit_log": [
+   {
+    "at": "2026-10-02T13:03:45.765Z",
+    "action": "annotate",
+    "message_uuid": "5d2b9b8e-2f64-49bf-b412-627c1f3c765c"
+   },
+   {
+    "at": "2026-10-02T13:03:45.857Z",
+    "action": "redact",
+    "message_uuid": "a186eaad-d58d-4999-a0dd-beea084ae75a"
+   },
+   {
+    "at": "2026-10-02T13:03:45.959Z",
+    "action": "redact_note",
+    "message_uuid": "a186eaad-d58d-4999-a0dd-beea084ae75a"
+   },
+   {
+    "at": "2026-10-02T13:03:46.023Z",
+    "action": "redact",
+    "message_uuid": "94eff0e8-6aaa-4927-af08-fc1bf85f04dc"
+   },
+   {
+    "at": "2026-10-02T13:03:46.109Z",
+    "action": "redact_note",
+    "message_uuid": "94eff0e8-6aaa-4927-af08-fc1bf85f04dc"
+   },
+   {
+    "at": "2026-10-02T13:03:46.173Z",
+    "action": "cut_below",
+    "message_uuid": "a713c760-4b66-4778-9417-6b874e7503d9",
+    "including_target": true,
+    "removed_count": 2,
+    "removed_uuids": [
+     "2ea3b5e2-4afc-4c18-9538-a3e9b1c457a1",
+     "a713c760-4b66-4778-9417-6b874e7503d9"
+    ]
+   },
+   {
+    "at": "2026-10-02T13:03:46.577Z",
+    "action": "annotate",
+    "message_uuid": "06ce7c0b-e655-4697-88c7-2c593b2b34ab"
+   }
+  ]
+ },
+ {
+  "uuid": "2aef99d2-2fa6-409b-8c79-caf8dd62fb37",
+  "name": "SKI コンビネータの練習",
+  "summary": "",
+  "created_at": "2026-09-03T21:00:00Z",
+  "updated_at": "2026-09-03T21:06:00Z",
+  "account": {
+   "uuid": "sample"
+  },
+  "chat_messages": [
+   {
+    "uuid": "b2d3620c-b442-446a-b727-dc0b27848884",
+    "text": "S K K が恒等関数 I と同じ働きをするのはなぜですか？",
+    "content": [
+     {
+      "type": "text",
+      "text": "S K K が恒等関数 I と同じ働きをするのはなぜですか？"
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-09-03T21:00:00Z",
+    "updated_at": "2026-09-03T21:00:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "00000000-0000-4000-8000-000000000000"
+   },
+   {
+    "uuid": "d855e952-e454-478e-b3e4-0839a97a4bf6",
+    "text": "任意の x に適用して簡約すると分かります。\n\n```\nS K K x → K x (K x) → x\n```\n\nどんな x でも x が返るので、S K K は I と同じ働きをします。",
+    "content": [
+     {
+      "type": "text",
+      "text": "任意の x に適用して簡約すると分かります。\n\n```\nS K K x → K x (K x) → x\n```\n\nどんな x でも x が返るので、S K K は I と同じ働きをします。"
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-09-03T21:02:00Z",
+    "updated_at": "2026-09-03T21:02:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "b2d3620c-b442-446a-b727-dc0b27848884"
+   },
+   {
+    "uuid": "0082c12a-13e0-4dab-b8e6-2b77f56b4862",
+    "text": "K K x はどうなりますか？",
+    "content": [
+     {
+      "type": "text",
+      "text": "K K x はどうなりますか？"
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-09-03T21:04:00Z",
+    "updated_at": "2026-09-03T21:04:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "d855e952-e454-478e-b3e4-0839a97a4bf6"
+   },
+   {
+    "uuid": "ab479a59-5dfe-42cf-81f0-91e872b161fb",
+    "text": "`K K x → K` です。引数 x を捨てて、K そのものを返します。",
+    "content": [
+     {
+      "type": "text",
+      "text": "`K K x → K` です。引数 x を捨てて、K そのものを返します。"
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-09-03T21:06:00Z",
+    "updated_at": "2026-09-03T21:06:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "0082c12a-13e0-4dab-b8e6-2b77f56b4862"
+   }
+  ]
+ },
+ {
+  "uuid": "2eba2c23-cfe0-40d8-8023-9d43b72af968",
+  "name": "週末の読書メモ",
+  "summary": "",
+  "created_at": "2026-09-05T15:30:00Z",
+  "updated_at": "2026-09-05T15:32:00Z",
+  "account": {
+   "uuid": "sample"
+  },
+  "chat_messages": [
+   {
+    "uuid": "3d5f032b-67e4-431c-93ad-4a844dac6287",
+    "text": "『数学基礎論入門』の第1章を読みました。形式的証明の定義を要約してください。",
+    "content": [
+     {
+      "type": "text",
+      "text": "『数学基礎論入門』の第1章を読みました。形式的証明の定義を要約してください。"
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-09-05T15:30:00Z",
+    "updated_at": "2026-09-05T15:30:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "00000000-0000-4000-8000-000000000000"
+   },
+   {
+    "uuid": "1d5581c5-96f8-496c-b07f-2ecb6505c4f1",
+    "text": "形式的証明とは、論理式の有限列で、どの項も公理であるか、それより前の項から推論規則で導かれるもののことです。列の最後の論理式を、その証明の結論と呼びます。",
+    "content": [
+     {
+      "type": "text",
+      "text": "形式的証明とは、論理式の有限列で、どの項も公理であるか、それより前の項から推論規則で導かれるもののことです。列の最後の論理式を、その証明の結論と呼びます。"
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-09-05T15:32:00Z",
+    "updated_at": "2026-09-05T15:32:00Z",
+    "attachments": [],
+    "files": [],
+    "parent_message_uuid": "3d5f032b-67e4-431c-93ad-4a844dac6287"
+   }
+  ]
+ }
+]
