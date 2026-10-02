@@ -99,7 +99,7 @@ find . -name 'conversations*.json'
 
 注意点：
 
-- `conversations.json` をテキストエディタで開くと、日本語が `数学…` のように見えますが、壊れてはいません。JSON の文字エスケープなので、このツールで読み込めば正しく表示されます。
+- `conversations.json` をテキストエディタで開くと、日本語が `\u6570\u5b66…` のように見えますが、壊れてはいません。JSON の文字エスケープなので、このツールで読み込めば正しく表示されます。
 - `users.json` や `login_history.json` には、メールアドレスやログイン履歴などの個人情報が入っています。対話ログを他人に渡すときは、これらを一緒に渡さないでください。
 - 会話に貼った画像の本体は、エクスポートに含まれません（ファイル名だけが残ります）。
 
@@ -180,7 +180,7 @@ find . -name 'conversations*.json'
 
 MIT License
 
-Copyright (c) 2026 <著作権者名>
+Copyright (c) 2026 Anonymous
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
