@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:">
 <title>Claude Log Viewer</title>
 <style>
 :root{
@@ -132,7 +133,7 @@ mark{background:#f5d76e;color:#000;border-radius:2px}
 <script>
 "use strict";
 const ROOT = "00000000-0000-4000-8000-000000000000";
-let DATA = [], cur = null, choice = {}; // choice[parentUuid] = index of selected child
+let DATA = [], cur = null, choice = Object.create(null); // choice[parentUuid] = index of selected child
 const opt = { think:false, tools:false, sys:false, att:true, annot:true };
 const REDACT_NOTE = "この入力・出力は審査の段階で不適切だと判定されたので除去しております";
 const ACT_LABEL = {redact:"内容を伏せる", redact_note:"伏せた理由の更新", cut_above:"上を削除", cut_below:"下を削除", delete_conversation:"会話の削除", annotate:"注釈の追加・更新", annotate_remove:"注釈の削除"};
@@ -142,13 +143,13 @@ function annotView(m){
 }
 const annotText = m => (m.annotation && opt.annot) ? `\n[注釈] ${m.annotation}\n` : "";
 const cutRow = t => `<div class="msg cutrow"><div class="gut on" style="--g-bg:var(--k-blue-bg)" title="後からの編集: 削除した範囲"><i class="blue">切</i></div><div class="mc"><div class="cut">${t}</div></div></div>`;
-const cutAbove = m => m.cut_above_count ? cutRow(`↑ この上にあった ${m.cut_above_count} 件の入出力は削除されています`) : "";
-const cutBelow = m => m.cut_below_count ? cutRow(`↓ この下にあった ${m.cut_below_count} 件の入出力は削除されています`) : "";
+const cutAbove = m => m.cut_above_count ? cutRow(`↑ この上にあった ${esc(m.cut_above_count)} 件の入出力は削除されています`) : "";
+const cutBelow = m => m.cut_below_count ? cutRow(`↓ この下にあった ${esc(m.cut_below_count)} 件の入出力は削除されています`) : "";
 function logHtml(c){
   const L = c.edit_log || []; if (!L.length) return "";
   return `<details class="log"><summary>編集記録 ${L.length} 件</summary><table>
     <tr><th>日時</th><th>操作</th><th>対象</th><th>削除件数</th></tr>
-    ${L.map(e => `<tr><td>${esc(fmt(e.at))}</td><td>${esc(ACT_LABEL[e.action]||e.action)}</td><td>${esc(e.message_uuid||"")}</td><td>${e.removed_count ?? ""}</td></tr>`).join("")}
+    ${L.map(e => `<tr><td>${esc(fmt(e.at))}</td><td>${esc(ACT_LABEL[e.action]||e.action)}</td><td>${esc(e.message_uuid||"")}</td><td>${esc(e.removed_count)}</td></tr>`).join("")}
   </table></details>`;
 }
 function logText(c){
@@ -210,7 +211,7 @@ function msgText(m){
 }
 function prep(c){
   const ms = (c.chat_messages||[]).slice().sort((a,b)=>(a.created_at||"").localeCompare(b.created_at||""));
-  const kids = {};
+  const kids = Object.create(null);
   const ids = new Set(ms.map(m=>m.uuid));
   for (const m of ms){
     let p = m.parent_message_uuid;
@@ -225,7 +226,9 @@ function prep(c){
 // path through the tree: at each fork, follow choice (default = newest child)
 function path(c){
   const out = []; let p = ROOT, guard = 0;
-  while (c._kids[p] && guard++ < 100000){
+  const seen = new Set();
+  while (c._kids[p] && !seen.has(p) && guard++ < 100000){
+    seen.add(p);
     const ks = c._kids[p];
     let i = choice[p]; if (i == null || i >= ks.length) i = ks.length - 1;
     out.push({m:ks[i], idx:i, n:ks.length, parent:p});
@@ -243,7 +246,7 @@ function renderList(){
   const hit = DATA.filter(c => !q || (fulltext ? c._full.includes(q) : c._title.toLowerCase().includes(q)));
   $("#count").textContent = DATA.length ? `${hit.length} / ${DATA.length} 件` : "";
   $("#list").innerHTML = hit.map(c => `
-    <div class="item ${cur&&cur.uuid===c.uuid?"on":""} ${c.deleted?"gone":""}" data-id="${c.uuid}">
+    <div class="item ${cur&&cur.uuid===c.uuid?"on":""} ${c.deleted?"gone":""}" data-id="${esc(c.uuid)}">
       <div class="t">${c._untitled?'<span class="muted">'+esc(c._title)+'</span>':esc(c._title)}</div>
       <div class="d">${fmt(c.updated_at||c.created_at)} · ${c.deleted ? "削除済み" : c._ms.length + " msgs"}</div>
     </div>`).join("");
@@ -326,7 +329,7 @@ function renderBlocks(m){
 }
 function openConv(id){
   const c = DATA.find(x=>x.uuid===id); if (!c) return;
-  if (!cur || cur.uuid !== id) choice = {};
+  if (!cur || cur.uuid !== id) choice = Object.create(null);
   cur = c;
   document.querySelectorAll(".item").forEach(el=>el.classList.toggle("on", el.dataset.id===id));
   const p = path(c);
@@ -344,13 +347,13 @@ function openConv(id){
     </div>
     <div id="conv"><div class="wrap">
       <div class="muted" style="font-size:12px">作成 ${fmt(c.created_at)} · 更新 ${fmt(c.updated_at)} · 表示中 ${p.length} / 全 ${c._ms.length} メッセージ</div>
-      ${c.deleted ? `<div class="cut">この会話は削除されました（元のメッセージ数 ${c.deleted_message_count ?? "?"} 件）。記録のみ残しています。</div>` : ""}
+      ${c.deleted ? `<div class="cut">この会話は削除されました（元のメッセージ数 ${esc(c.deleted_message_count ?? "?")} 件）。記録のみ残しています。</div>` : ""}
       ${c._ms.some(x => marks(x).length || x.cut_above_count || x.cut_below_count) ? LEGEND : ""}
       ${logHtml(c)}
       ${p.map(({m,idx,n,parent}) => `
         ${cutAbove(m)}<div class="msg ${m.sender==="human"?"human":"assistant"}">${gutter(m)}<div class="mc">
           <div class="who"><b>${m.sender==="human"?"あなた":"Claude"}</b><span>${fmt(m.created_at)}</span>
-            ${n>1?`<span class="fork"><button data-p="${parent}" data-d="-1" ${idx===0?"disabled":""}>‹</button>分岐 ${idx+1}/${n}<button data-p="${parent}" data-d="1" ${idx===n-1?"disabled":""}>›</button></span>`:""}
+            ${n>1?`<span class="fork"><button data-p="${esc(parent)}" data-d="-1" ${idx===0?"disabled":""}>‹</button>分岐 ${idx+1}/${n}<button data-p="${esc(parent)}" data-d="1" ${idx===n-1?"disabled":""}>›</button></span>`:""}
             ${typeof msgTools === "function" ? msgTools(m) : ""}
           </div>
           <div class="body">${renderBlocks(m)}</div>${typeof annotEditor === "function" ? annotEditor(m) : annotView(m)}
